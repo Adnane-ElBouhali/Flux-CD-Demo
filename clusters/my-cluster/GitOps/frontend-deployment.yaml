@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: gitops
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: adnaneelbouhali/aseds-exam-part2:frontend-imagev1
+          ports:
+            - containerPort: 80
+              name: http-port
+          
+          livenessProbe:
+            httpGet:
+                path: /index.html
+                port: 80
+            initialDelaySeconds: 15
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 1
+          readinessProbe:
+            httpGet:
+                path: /index.html
+                port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 1
+
+          volumeMounts:
+          - mountPath: /etc/nginx
+            name: nginx-configmap
+            readOnly: true
+          env:
+            - name: CLOUDL_SERVER
+              value: backend-service
+      volumes:
+      - name: nginx-configmap
+        configMap:
+          name: nginx-configmap
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+  selector:
+    matchLabels:
+      app: frontend
